@@ -107,7 +107,42 @@ jobs:
           # 4. 重新计算压缩包
           gzip -fk dists/stable/main/binary-arm64/Packages
           
-          # 5. 清理：只保留 dists 目录和 conf 目录，删掉超过 100MB 的文件
+          # 5. 重新生成 Release 文件（因为 Packages 和 Packages.gz 已更改）
+          cd dists/stable
+          rm -f Release Release.gpg InRelease
+          
+          cat <<EOF > Release
+          Origin: 1Password-ARM-Repo
+          Label: 1Password-ARM-Repo
+          Codename: stable
+          Architectures: arm64
+          Components: main
+          Date: $(date -Ru)
+          EOF
+          
+          # 计算所有索引文件的哈希
+          {
+            echo "MD5Sum:"
+            for f in main/binary-arm64/Packages main/binary-arm64/Packages.gz; do
+              [ -f "$f" ] && echo " $(md5sum "$f" | cut -d' ' -f1) $(wc -c < "$f" | tr -d ' ') $f"
+            done
+            echo "SHA1:"
+            for f in main/binary-arm64/Packages main/binary-arm64/Packages.gz; do
+              [ -f "$f" ] && echo " $(sha1sum "$f" | cut -d' ' -f1) $(wc -c < "$f" | tr -d ' ') $f"
+            done
+            echo "SHA256:"
+            for f in main/binary-arm64/Packages main/binary-arm64/Packages.gz; do
+              [ -f "$f" ] && echo " $(sha256sum "$f" | cut -d' ' -f1) $(wc -c < "$f" | tr -d ' ') $f"
+            done
+          } >> Release
+          
+          # 签名 Release 文件
+          gpg --batch --yes --armor --detach-sign -o Release.gpg Release
+          gpg --batch --yes --clearsign -o InRelease Release
+          
+          cd ../..
+          
+          # 6. 清理：只保留 dists 目录和 conf 目录，删掉超过 100MB 的文件
           rm -rf pool/ package/ *.deb *.tar.gz 1password-*.arm64/
 
       - name: Deploy to GitHub Pages
