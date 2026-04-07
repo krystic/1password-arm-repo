@@ -79,6 +79,8 @@ jobs:
           Architecture: arm64
           Maintainer: Krystic <ice@krystic.com>
           Depends: libasound2, libpango-1.0-0, libxtst6, libnss3, libcurl4, libgbm1
+          Section: utils
+          Priority: optional
           Description: 1Password for Linux ARM (Auto-built via GitHub Actions)
           EOF
 
