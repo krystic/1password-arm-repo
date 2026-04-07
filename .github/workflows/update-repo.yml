@@ -68,9 +68,10 @@ jobs:
           # 5. 创建脚本
           cat <<EOF > package/DEBIAN/postinst
           #!/bin/bash
-          ln -sf /opt/1Password/1password /usr/bin/1password
-          [ -f "/opt/1Password/after-install.sh" ] && chmod +x /opt/1Password/after-install.sh && /opt/1Password/after-install.sh
-          [ -x "\$(command -v update-desktop-database)" ] && update-desktop-database -q /usr/share/applications || true
+          if [ -f "/opt/1Password/after-install.sh" ]; then
+            chmod +x /opt/1Password/after-install.sh
+            cd /opt/1Password && source ./after-install.sh && installFiles
+          fi
           EOF
           chmod 755 package/DEBIAN/postinst
           
@@ -78,7 +79,12 @@ jobs:
           #!/bin/bash
           if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
             rm -f /usr/bin/1password
+            rm -f /usr/share/polkit-1/actions/com.1password.1Password.policy
+            rm -f /usr/share/applications/1password.desktop
             [ -x "\$(command -v update-desktop-database)" ] && update-desktop-database -q /usr/share/applications || true
+          fi
+          if [ "\$1" = "purge" ]; then
+            rm -rf /etc/1password
           fi
           EOF
           chmod 755 package/DEBIAN/postrm
