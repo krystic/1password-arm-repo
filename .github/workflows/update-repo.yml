@@ -97,57 +97,26 @@ jobs:
           SignWith: ${{ secrets.GPG_KEY_ID }}
           EOF
           
-          # 2. 生成本地索引
+          # 2. 生成本地索引（reprepro 会自动创建 pool/ 和 dists/ 目录）
           reprepro -b . includedeb stable 1password_${{ env.VERSION }}_arm64.deb
 
-          # 3. 【核心步骤】重写索引中的路径，指向 Release 链接
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/1password_${{ env.VERSION }}_arm64.deb"
-          sed -i "s|Filename: pool/main/.*\.deb|Filename: ${RELEASE_URL}|g" dists/stable/main/binary-arm64/Packages
+          # 3. 创建部署目录
+          mkdir -p deploy
+          cp -r dists deploy/
+          cp public.key deploy/
           
-          # 4. 重新计算压缩包
-          gzip -fk dists/stable/main/binary-arm64/Packages
-          
-          # 5. 重新生成 Release 文件（因为 Packages 和 Packages.gz 已更改）
-          cd dists/stable
-          rm -f Release Release.gpg InRelease
-          
-          cat <<EOF > Release
-          Origin: 1Password-ARM-Repo
-          Label: 1Password-ARM-Repo
-          Codename: stable
-          Architectures: arm64
-          Components: main
-          Date: $(date -Ru)
+          # 4. 创建 _redirects 文件，将 pool/ 请求重定向到 GitHub Releases
+          cat <<EOF > deploy/_redirects
+          /pool/main/1/1password/1password_*_arm64.deb https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/1password_${{ env.VERSION }}_arm64.deb 302
           EOF
-          
-          # 计算所有索引文件的哈希
-          {
-            echo "MD5Sum:"
-            for f in main/binary-arm64/Packages main/binary-arm64/Packages.gz; do
-              [ -f "$f" ] && echo " $(md5sum "$f" | cut -d' ' -f1) $(wc -c < "$f" | tr -d ' ') $f"
-            done
-            echo "SHA1:"
-            for f in main/binary-arm64/Packages main/binary-arm64/Packages.gz; do
-              [ -f "$f" ] && echo " $(sha1sum "$f" | cut -d' ' -f1) $(wc -c < "$f" | tr -d ' ') $f"
-            done
-            echo "SHA256:"
-            for f in main/binary-arm64/Packages main/binary-arm64/Packages.gz; do
-              [ -f "$f" ] && echo " $(sha256sum "$f" | cut -d' ' -f1) $(wc -c < "$f" | tr -d ' ') $f"
-            done
-          } >> Release
-          
-          # 签名 Release 文件
-          gpg --batch --yes --armor --detach-sign -o Release.gpg Release
-          gpg --batch --yes --clearsign -o InRelease Release
-          
-          cd ../..
-          
-          # 6. 清理：只保留 dists 目录和 conf 目录，删掉超过 100MB 的文件
-          rm -rf pool/ package/ *.deb *.tar.gz 1password-*.arm64/
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+          # 5. 清理临时文件
+          rm -rf package/ *.tar.gz 1password-*.arm64/ conf/ db/ pool/ dists/
+          rm -f 1password_${{ env.VERSION }}_arm64.deb
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
-          branch: gh-pages
-          folder: .
-          clean: true
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy deploy --project-name=1password-arm-repo
