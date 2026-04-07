@@ -1,42 +1,65 @@
-- name: Download 1Password and Build DEB
+name: Update 1Password ARM Repo
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天凌晨自动检查
+  workflow_dispatch:      # 支持手动触发
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
         run: |
-          # 1. 下载最新的 tar.gz
+          sudo apt-get update
+          sudo apt-get install -y reprepro gpg dpkg-dev curl
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch
+
+      - name: Download 1Password and Build DEB
+        run: |
+          # 1. 下载最新的稳定版压缩包
           curl -L -o 1password-latest.tar.gz https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
           
-          # 2. 解压到当前目录 (不使用 --strip-components，为了保留那个带版本号的文件夹名)
+          # 2. 解压到当前目录
           tar -xzf 1password-latest.tar.gz
           
-          # 3. 【核心修复】从文件夹名称中提取版本号
-          # 文件夹名格式为: 1password-8.12.8.arm64
+          # 3. 从解压后的目录名提取版本号 (目录格式类似 1password-8.12.8.arm64/)
           DIR_NAME=$(ls -d 1password-*.arm64/ | head -n 1 | sed 's/\///g')
-          VERSION=$(echo $DIR_NAME | cut -d'-' -f2 | sed 's/.arm64//')
+          # 提取数字版本部分 (例如 8.12.8)
+          VERSION=$(echo $DIR_NAME | grep -oP '\d+\.\d+\.\d+')
           
-          echo "Full Directory: $DIR_NAME"
-          echo "Detected Version: $VERSION"
+          echo "Full Directory Name: $DIR_NAME"
+          echo "Extracted Version: $VERSION"
           
           if [ -z "$VERSION" ]; then
-            echo "Error: Could not extract version from directory name!"
+            echo "Error: Version detection failed!"
             exit 1
           fi
 
-          # 4. 创建标准的 Debian 目录结构并移动文件
+          # 4. 创建标准的 Debian 目录结构
           mkdir -p package/opt/1Password
           mkdir -p package/usr/bin
           mkdir -p package/usr/share/applications
           mkdir -p package/etc/xdg/autostart
           mkdir -p package/DEBIAN
           
-          # 将解压出来的内容移动到 /opt/1Password
+          # 5. 将解压的内容移动到打包路径
           mv $DIR_NAME/* package/opt/1Password/
           
-          # 5. 配置桌面快捷方式
+          # 6. 配置桌面快捷方式 (从程序自带的资源中复制)
           if [ -f "package/opt/1Password/resources/1password.desktop" ]; then
             cp package/opt/1Password/resources/1password.desktop package/usr/share/applications/
-            # 修正图标路径
+            # 修正图标路径为绝对路径，确保所有桌面环境都能找到图标
             sed -i 's|Icon=1password|Icon=/opt/1Password/resources/1password.png|g' package/usr/share/applications/1password.desktop
           fi
 
-          # 6. 配置登录自启动 (XDG Autostart)
+          # 7. 配置登录静默自启动 (XDG Autostart)
           cat <<EOF > package/etc/xdg/autostart/1password-autostart.desktop
           [Desktop Entry]
           Name=1Password Autostart
@@ -49,38 +72,69 @@
           Comment=Start 1Password in the background on login
           EOF
 
-          # 7. 创建 Debian 控制文件
+          # 8. 创建 Debian 控制文件
           cat <<EOF > package/DEBIAN/control
           Package: 1password
           Version: $VERSION
           Architecture: arm64
           Maintainer: Krystic <ice@krystic.com>
           Depends: libasound2, libpango-1.0-0, libxtst6, libnss3, libcurl4, libgbm1
-          Description: 1Password for Linux ARM (Auto-built)
+          Description: 1Password for Linux ARM (Auto-built via GitHub Actions)
           EOF
 
-          # 8. 创建 postinst (安装后脚本)
+          # 9. 创建安装后脚本 (postinst)
           cat <<EOF > package/DEBIAN/postinst
           #!/bin/bash
           set -e
+          # 创建全局命令链接
           ln -sf /opt/1Password/1password /usr/bin/1password
+          # 执行 1Password 官方初始化脚本 (处理浏览器沙盒、PolicyKit 等)
           if [ -f "/opt/1Password/after-install.sh" ]; then
             chmod +x /opt/1Password/after-install.sh
             /opt/1Password/after-install.sh
           fi
+          # 刷新图标缓存
           if [ -x "\$(command -v update-desktop-database)" ]; then
             update-desktop-database -q /usr/share/applications || true
           fi
+          echo "1Password ARM 安装完成，登录自启动已启用。"
           EOF
 
-          # 9. 创建 prerm (卸载前脚本)
+          # 10. 创建卸载前脚本 (prerm)
           cat <<EOF > package/DEBIAN/prerm
           #!/bin/bash
           set -e
           rm -f /usr/bin/1password
           EOF
 
+          # 设置脚本权限 (必须为 755)
           chmod 755 package/DEBIAN/postinst package/DEBIAN/prerm
           
-          # 10. 正式打包
+          # 11. 构建 DEB 安装包
           dpkg-deb --build package 1password_${VERSION}_arm64.deb
+
+      - name: Update Reprepro Repository
+        run: |
+          # 每次运行清理旧的仓库索引，确保只有最新版本
+          rm -rf conf db pool dists
+          
+          mkdir -p conf
+          cat <<EOF > conf/distributions
+          Origin: 1Password-ARM-Repo
+          Label: 1Password-ARM-Repo
+          Codename: stable
+          Architectures: arm64
+          Components: main
+          Description: Personal APT Repository for 1Password Linux ARM
+          SignWith: ${{ secrets.GPG_KEY_ID }}
+          EOF
+          
+          # 使用 Reprepro 管理仓库结构
+          reprepro -b . includedeb stable 1password_*.deb
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: .
+          clean: true
