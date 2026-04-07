@@ -12,6 +12,8 @@ permissions:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -129,17 +131,12 @@ jobs:
           rm -rf package/ *.tar.gz 1password-*.arm64/ conf/ db/ pool/ dists/
           rm -f 1password_${{ env.VERSION }}_arm64.deb
 
-      - name: Create Cloudflare Pages Project
-        continue-on-error: true
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create 1password-arm-repo --production-branch=main
-
-      - name: Upload to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy deploy --project-name=1password-arm-repo --commit-dirty=true
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # 尝试创建项目（如果已存在则忽略）
+          npx wrangler pages project create 1password-arm-repo --production-branch=main 2>&1 | grep -v "already exists" || true
+          # 部署
+          npx wrangler pages deploy deploy --project-name=1password-arm-repo --commit-dirty=true
