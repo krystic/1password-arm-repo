@@ -74,6 +74,15 @@ jobs:
           EOF
           chmod 755 package/DEBIAN/postinst
           
+          cat <<EOF > package/DEBIAN/postrm
+          #!/bin/bash
+          if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
+            rm -f /usr/bin/1password
+            [ -x "\$(command -v update-desktop-database)" ] && update-desktop-database -q /usr/share/applications || true
+          fi
+          EOF
+          chmod 755 package/DEBIAN/postrm
+          
           # 6. 打包
           dpkg-deb --build package 1password_${VERSION}_arm64.deb
 
