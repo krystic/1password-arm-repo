@@ -6,9 +6,9 @@ Depends: libasound2, libpango-1.0-0, libxtst6, libnss3, libcurl4, libgbm1
 Priority: optional
 Section: utils
 Filename: https://github.com/krystic/1password-arm-repo/releases/download/v8.12.8/1password_8.12.8_arm64.deb
-Size: 143702860
-SHA256: 41bea05afb6163183843f607c8e3cbe4c134d1b819a1cbbf07697945d83bbdc7
-SHA1: 00c97f1b0ea979eb64284ec5861b33897d4c4c43
-MD5sum: cc3f6098c7045462427b4f39156e2941
+Size: 143702910
+SHA256: c88c337341ea7c2cf09244a7e1947eecb750e59aa7ae9b4b16cfc2c568debb74
+SHA1: 2f6e312b6d579b69e90a98cec34e8d82b3ddda1e
+MD5sum: 5da72b73a09584bf8caaeb78c40b0c97
 Description: 1Password for Linux ARM (Auto-built)
 
