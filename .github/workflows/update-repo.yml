@@ -43,7 +43,7 @@ jobs:
             cp package/opt/1Password/resources/1password.desktop package/usr/share/applications/
             sed -i 's|Icon=1password|Icon=/opt/1Password/resources/1password.png|g' package/usr/share/applications/1password.desktop
           fi
-          cat <<EOF > package/etc/xdg/autostart/1password-autostart.desktop
+          cat <<EOF > package/etc/xdg/autostart/1password.desktop
           [Desktop Entry]
           Name=1Password Autostart
           Exec=/opt/1Password/1password --silent
