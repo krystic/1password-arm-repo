@@ -1,0 +1,37 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: 1Password-ARM-Repo
+Label: 1Password-ARM-Repo
+Codename: stable
+Date: Tue, 07 Apr 2026 06:41:36 UTC
+Architectures: arm64
+Components: main
+MD5Sum:
+ f9ea4869a9dae4a814b245e7ef2ecd1d 488 main/binary-arm64/Packages
+ 65d6ff3f5a36f7b13c48d5a1608d87ac 369 main/binary-arm64/Packages.gz
+ 00a777520731c0f612b5a55d10cf3919 89 main/binary-arm64/Release
+SHA1:
+ 4ded0d075d1c0bf0a6150928b8234c1e04cf13c5 488 main/binary-arm64/Packages
+ ff3d681b4e33ad7da5819cb57dead63ce875a3e4 369 main/binary-arm64/Packages.gz
+ 7926e506eb8f980cfd58b00e944b78ec879ba323 89 main/binary-arm64/Release
+SHA256:
+ 4e9300587e463adebefb6f7f7aba16a4fc5ee2e5beb6953fe588d0f9d7f69d97 488 main/binary-arm64/Packages
+ d64cf0d94cfee0155688342e56d7513402c03e6b484c8012bde38735839d4422 369 main/binary-arm64/Packages.gz
+ 9662c348885d5a9beccb6c42072d60af2cf496c4d4289fa1403e7059436295f1 89 main/binary-arm64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEQ5q5KgSiLBSY4y/7pE+uN9MAX9EFAmnUpyAACgkQpE+uN9MA
+X9FAFg/+PmWA3ZLxclJadMde8cYBA+59AoN0q0X4wDnvJYzJMt1daMAvnFEs2fV7
+SUq0cvOQMObJbdptSD9mPkA70lwpcg19yLQ68bfOvPW06fpHLFnrPI5LawJpYyUl
+t1kNkNxiyprl6o8y624pcsN/8ZxqEMTjVYu4edvWdO2IX+HJXoBOh9rG0PsW4s4X
+7FmTwzZ5QzcSV+Mi8WbEHSHMPTK2OUIZrlj49vc0SiVUM8Bli60zRI6vOB52pw3k
+nTeiWWMVC0Q58HVrLINFn0a9I9VpNYYHQ4TSf0DBIdkk/9iAbuK1vqPVAaCeKBFZ
+vg4bGV3ts1cszbrRgioxpmRZr0/1R2JIl2jDekhNXlwMHr2dXAHFPAqoUEmWr6S0
+PlzjFZjmBCjjpG5nqMfoNsZNvEp3Jta+NoMayEzjSdmPB6mgFxg+p+vK/ys2ASOg
+dK7BGYujUgHg8Lj9y7SmYqZlMZMjk2vimwJ7xGy4A1ckSCsI9pIeItBzgHFbCcO/
+PcUaFTvHpocByWjPf3DUzabWhPPNaqCZ4dyXluW95S666AwwETIjNJSUoU3zJ5YS
+KqtmjbR/p91JtD4oec3MRVFehJhxISILdyVMbtphiuk6MhePpHJ+dTL+VYOLYrbW
+IoV/ofXsrCsvD+muGfMcGJO2VJT0UaAFD6B8D3F6IToa3o7lPNk=
+=5Vvj
+-----END PGP SIGNATURE-----

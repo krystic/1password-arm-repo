@@ -1,0 +1,6 @@
+Origin: 1Password-ARM-Repo
+Label: 1Password-ARM-Repo
+Codename: stable
+Architectures: arm64
+Components: main
+SignWith: A44FAE37D3005FD1
