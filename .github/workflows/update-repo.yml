@@ -1,0 +1,67 @@
+name: Update 1Password ARM Repo
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天凌晨检查一次
+  workflow_dispatch:      # 允许手动触发
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y reprepro gpg dpkg-dev curl
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch
+
+      - name: Download 1Password and Build DEB
+        run: |
+          # 1. 获取最新版本号
+          VERSION=$(curl -sI https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz | grep -i location | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "Latest version: $VERSION"
+          
+          # 2. 下载并解压
+          curl -O https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
+          mkdir -p package/usr/bin
+          mkdir -p package/DEBIAN
+          tar -xzf 1password-latest.tar.gz -C package/usr/bin --strip-components=1
+          
+          # 3. 创建 control 文件
+          cat <<EOF > package/DEBIAN/control
+          Package: 1password
+          Version: $VERSION
+          Architecture: arm64
+          Maintainer: Krystic ice@krystic.com
+          Description: 1Password for Linux ARM
+          EOF
+          
+          # 4. 打包
+          dpkg-deb --build package 1password_${VERSION}_arm64.deb
+
+      - name: Update Reprepro Repository
+        run: |
+          # 创建 reprepro 配置文件
+          mkdir -p conf
+          cat <<EOF > conf/distributions
+          Origin: 1Password-ARM-Repo
+          Label: 1Password-ARM-Repo
+          Codename: stable
+          Architectures: arm64
+          Components: main
+          Description: Personal APT Repository for 1Password ARM
+          SignWith: ${{ secrets.GPG_KEY_ID }}
+          EOF
+          
+          # 将 deb 加入仓库
+          reprepro -b . includedeb stable 1password_*.deb
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: . # 将当前目录（含 conf, db, pool, dists）推送到 gh-pages
