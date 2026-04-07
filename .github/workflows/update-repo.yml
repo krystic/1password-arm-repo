@@ -80,9 +80,21 @@ jobs:
           cat <<EOF > package/DEBIAN/postrm
           #!/bin/bash
           if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
-            rm -f /usr/bin/1password
+            # 删除 PolicyKit 策略
             rm -f /usr/share/polkit-1/actions/com.1password.1Password.policy
-            rm -f /usr/share/applications/1password.desktop
+            # 删除文档
+            rm -rf /usr/share/doc/1password
+            # 删除桌面快捷方式
+            if [ -x "\$(command -v xdg-desktop-menu)" ]; then
+              xdg-desktop-menu uninstall --mode system 1password.desktop 2>/dev/null || true
+            else
+              rm -f /usr/share/applications/1password.desktop
+            fi
+            # 删除图标
+            rm -f /usr/share/icons/hicolor/*/apps/1password.png
+            # 删除符号链接
+            rm -f /usr/bin/1password
+            # 更新桌面数据库
             [ -x "\$(command -v update-desktop-database)" ] && update-desktop-database -q /usr/share/applications || true
           fi
           if [ "\$1" = "purge" ]; then
