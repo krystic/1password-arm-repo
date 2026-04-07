@@ -114,12 +114,13 @@ jobs:
           rm -rf package/ *.tar.gz 1password-*.arm64/ conf/ db/ pool/ dists/
           rm -f 1password_${{ env.VERSION }}_arm64.deb
 
-      - name: Deploy to Cloudflare Pages
+      - name: Create Cloudflare Pages Project
+        continue-on-error: true
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create 1password-arm-repo --production-branch=main || true
+          command: pages project create 1password-arm-repo --production-branch=main
 
       - name: Upload to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
