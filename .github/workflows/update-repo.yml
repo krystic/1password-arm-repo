@@ -141,7 +141,8 @@ jobs:
           EOF
 
           # 5. 清理临时文件
-          rm -rf package/ *.tar.gz 1password-*.arm64/ conf/ db/ pool/ dists/
+          sudo rm -rf package/
+          rm -rf *.tar.gz 1password-*.arm64/ conf/ db/ pool/ dists/
           rm -f 1password_${{ env.VERSION }}_arm64.deb
 
       - name: Deploy to Cloudflare Pages
