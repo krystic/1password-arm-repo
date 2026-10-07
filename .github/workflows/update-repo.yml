@@ -45,15 +45,15 @@ jobs:
             cp package/opt/1Password/resources/1password.desktop package/usr/share/applications/
             sed -i 's|Icon=1password|Icon=/opt/1Password/resources/1password.png|g' package/usr/share/applications/1password.desktop
           fi
-          cat <<EOF > package/etc/xdg/autostart/1password.desktop
-          [Desktop Entry]
-          Name=1Password Autostart
-          Exec=/opt/1Password/1password --silent
-          Terminal=false
-          Type=Application
-          Icon=/opt/1Password/resources/1password.png
-          X-GNOME-Autostart-enabled=true
-          EOF
+          # cat <<EOF > package/etc/xdg/autostart/1password.desktop
+          # [Desktop Entry]
+          # Name=1Password Autostart
+          # Exec=/opt/1Password/1password --silent
+          # Terminal=false
+          # Type=Application
+          # Icon=/opt/1Password/resources/1password.png
+          # X-GNOME-Autostart-enabled=true
+          # EOF
 
           # 4. 创建 Control 文件 (加入 Section 解决 reprepro 报错)
           cat <<EOF > package/DEBIAN/control
